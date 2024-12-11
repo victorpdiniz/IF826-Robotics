@@ -15,6 +15,7 @@ def SE2_theta(theta):
                      [0, 0, 1]])
 
 # Tests
+print('\nSE2 Transformation Matrix/\n')
 
 # 1
 
@@ -62,12 +63,56 @@ def ik(x, y):
     theta1 = np.arctan(y / x) - theta3
     return theta1, theta2
 
-# IK
+# Tests FK
+print('\nfk/\n')
 
+# 1
+theta1, theta2 = 0, np.pi/2
+print(f'Manipulator position for configuration (theta1, theta2) = {theta1, theta2}: (x, y) = {fk(theta1, theta2)}')
+
+# 2
+theta1, theta2 = np.pi/2, np.pi/2
+print(f'Manipulator position for configuration (theta1, theta2) = {theta1, theta2}: (x, y) = {fk(theta1, theta2)}')
+
+# 3
+theta1, theta2 = np.pi/2, -np.pi/2
+print(f'Manipulator position for configuration (theta1, theta2) = {theta1, theta2}: (x, y) = {fk(theta1, theta2)}')
+
+# 4
+theta1, theta2 = -np.pi, np.pi
+print(f'Manipulator position for configuration (theta1, theta2) = {theta1, theta2}: (x, y) = {fk(theta1, theta2)}')
+
+# Tests IK
+print('\nik/\n')
+
+# 1
+x, y = 1, 1
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
+
+# 2
+x, y = 1, -1
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
+
+# 3
+x, y = -1, 1
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
+
+# 4
+x, y = -1, -1
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
+
+# 5
+x, y = 2, 1
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
+
+# 6
 x, y = 2, 0
-print(f'ik/ Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(2, 0)}')
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
 
-# FK
+# 7
+x, y = 0, 2
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
 
-theta1, theta2 = ik(x, y)
-print(f'fk/ Manipulator position for configuration (theta1, theta2) = {theta1, theta2}: (x, y) = {fk(theta1, theta2)}')
+# 8
+x, y = -2, 0
+print(f'Arm configuration for position (x, y) = {(x, y)}: (theta1, theta2) = {ik(x, y)}')
