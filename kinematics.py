@@ -13,12 +13,18 @@ class Kinematics2DOF:
     @staticmethod
     def inverse_kinematics(x, y, a1, a2):
         if x**2 + y**2 > a1**2 + a2**2 + 2 * a1 * a2:
-            return np.array([np.nan, np.nan])
-
-        q2 = np.arccos((x**2 + y**2 - a1**2 - a2**2) / (2 * a1 * a2))
-        q1 = np.arctan(y / x) - np.arcsin((a2 * np.sin(q2)) / np.sqrt(x**2 + y**2))
-
-        return np.array([q1, q2])
+            return None
+        elif x**2 + y**2 == a1**2 + a2**2 + 2 * a1 * a2:
+            q2 = 0
+            q1 = np.arctan2(y, x)
+            return np.array([[q1, q2]])
+        else:
+            q2_1 = np.arccos((x**2 + y**2 - a1**2 - a2**2) / (2 * a1 * a2))
+            q2_2 = -q2_1
+            q3 = np.arctan((a2 * np.sin(q2_1)) / a1 + a2 * np.cos(q2_1))
+            q1_1 = np.arctan2(y, x) - q3
+            q1_2 = np.arctan2(y, x) + q3
+            return np.array([[q1_1, q2_1], [q1_2, q2_2]])
 
 
 def main():
@@ -29,18 +35,22 @@ def main():
     # Forward Kinematics
     configurations = [[0, np.pi / 2], [np.pi / 2, np.pi / 2], [np.pi / 2, -np.pi / 2], [-np.pi, np.pi]]
 
+    print('Forward Kinematics')
+    print('-' * 150)
+
     for i, configuration in enumerate(configurations):
         print(f'{i + 1}/ End effector position for configuration [theta1, theta2] = {configuration} ->',
-              f'[x, y] = {Kinematics2DOF.forward_kinematics(configuration[0], configuration[1], a1, a2)}')
-
-    print()
+              f'[x, y] = {Kinematics2DOF.forward_kinematics(configuration[0], configuration[1], a1, a2)}\n')
 
     # Inverse Kinematics
     positions = [[1, 1], [1, -1], [-1, 1], [-1, -1], [2, 1], [2, 0], [0, 2], [-2, 0]]
 
+    print('Inverse Kinematics')
+    print('-' * 150)
+
     for i, position in enumerate(positions):
         print(f'{i + 1}/ Joint configuration for position [x, y] = {position} ->',
-              f'[theta1, theta2] = {Kinematics2DOF.inverse_kinematics(position[0], position[1], a1, a2)}')
+              f'[theta1, theta2] =\n{Kinematics2DOF.inverse_kinematics(position[0], position[1], a1, a2)}\n')
 
 
 if __name__ == '__main__':
