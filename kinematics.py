@@ -4,43 +4,50 @@ from transformations import SE2
 
 class Kinematics2DOF:
     @staticmethod
-    def forward_kinematics(q1, q2, a1, a2):
-        O_T_A = np.matmul(SE2.rotation(q1), SE2.translation(a1, 0))
-        A_T_B = np.matmul(SE2.rotation(q2), SE2.translation(a2, 0))
-        O_T_B = np.matmul(O_T_A, A_T_B)
-        return O_T_B[:2, 2]
+    def forward_kinematics(theta1, theta2, link1_length, link2_length):
+        base_to_joint1 = np.matmul(SE2.rotation(theta1), SE2.translation(link1_length, 0))
+        joint1_to_joint2 = np.matmul(SE2.rotation(theta2), SE2.translation(link2_length, 0))
+        base_to_end_effector = np.matmul(base_to_joint1, joint1_to_joint2)
+        x, y = base_to_end_effector[:2, 2]
+        return np.array([x, y])
 
     @staticmethod
-    def inverse_kinematics(x, y, a1, a2):
-        if x**2 + y**2 > a1**2 + a2**2 + 2 * a1 * a2:
-            return None
-        elif x**2 + y**2 == a1**2 + a2**2 + 2 * a1 * a2:
-            q2 = 0
-            q1 = np.arctan2(y, x)
-            return np.array([[q1, q2]])
+    def inverse_kinematics(x, y, link1_length, link2_length):
+        if x**2 + y**2 > (link1_length + link2_length)**2:
+            return np.array([])
+        elif x**2 + y**2 == (link1_length + link2_length)**2:
+            theta2 = 0
+            theta1 = np.arctan2(y, x)
+            return np.array([[theta1, theta2]])
         else:
-            q2_1 = np.arccos((x**2 + y**2 - a1**2 - a2**2) / (2 * a1 * a2))
-            q2_2 = -q2_1
-            q3 = np.arctan((a2 * np.sin(q2_1)) / a1 + a2 * np.cos(q2_1))
-            q1_1 = np.arctan2(y, x) - q3
-            q1_2 = np.arctan2(y, x) + q3
-            return np.array([[q1_1, q2_1], [q1_2, q2_2]])
+            theta2_1 = np.arccos((x**2 + y**2 - link1_length**2 - link2_length**2)
+                                 / (2 * link1_length * link2_length))
+            theta2_2 = -theta2_1
+
+            theta3 = np.arctan((link2_length * np.sin(theta2_1))
+                               / link1_length + link2_length * np.cos(theta2_1))
+
+            theta1_1 = np.arctan2(y, x) - theta3
+            theta1_2 = np.arctan2(y, x) + theta3
+
+            return np.array([[theta1_1, theta2_1], [theta1_2, theta2_2]])
 
 
 def main():
-    ################################### Inverse and Forward Kinematics ###################################
-
-    a1 = a2 = 1
+    ################################ Inverse and Forward Kinematics ################################
+    link1_length = link2_length = 1
 
     # Forward Kinematics
-    configurations = [[0, np.pi / 2], [np.pi / 2, np.pi / 2], [np.pi / 2, -np.pi / 2], [-np.pi, np.pi]]
+    configurations = [[0, np.pi/2], [np.pi/2, np.pi/2], [np.pi/2, -np.pi/2], [-np.pi, np.pi]]
 
     print('Forward Kinematics')
     print('-' * 150)
 
     for i, configuration in enumerate(configurations):
-        print(f'{i + 1}/ End effector position for configuration [theta1, theta2] = {configuration} ->',
-              f'[x, y] = {Kinematics2DOF.forward_kinematics(configuration[0], configuration[1], a1, a2)}\n')
+        theta1, theta2 = configuration
+        position = Kinematics2DOF.forward_kinematics(theta1, theta2, link1_length, link2_length)
+        print(f'{i}/ End effector position for configuration [theta1, theta2] = {configuration}',
+              f'-> [x, y] = {position}\n')
 
     # Inverse Kinematics
     positions = [[1, 1], [1, -1], [-1, 1], [-1, -1], [2, 1], [2, 0], [0, 2], [-2, 0]]
@@ -49,8 +56,10 @@ def main():
     print('-' * 150)
 
     for i, position in enumerate(positions):
-        print(f'{i + 1}/ Joint configuration for position [x, y] = {position} ->',
-              f'[theta1, theta2] =\n{Kinematics2DOF.inverse_kinematics(position[0], position[1], a1, a2)}\n')
+        x, y = position
+        configuration = Kinematics2DOF.inverse_kinematics(x, y, link1_length, link2_length)
+        print(f'{i}/ Joint configuration for position [x, y] = {position} -> [theta1, theta2] =')
+        print(configuration, '\n')
 
 
 if __name__ == '__main__':

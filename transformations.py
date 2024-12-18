@@ -22,31 +22,33 @@ class SE2:
 
 
 def main():
-    ############################## SE2 Transformations #############################
+    ###################################### SE2 Transformations #####################################
+    print('SE2 Transformations')
+    print('-' * 150)
 
     # 1
-    R2_P = np.array([0.5, 0.5, 1]).transpose()
-    R1_T_R2 = SE2.translation(1, 0.25)
-    R1_P = np.matmul(R1_T_R2, R2_P)
-    print(f'1/ Coordinates of point P in reference frame R1 -> [x, y] = {R1_P[:2]}')
+    point_in_frame_R2 = np.array([0.5, 0.5, 1]).transpose()
+    transform_R1_to_R2 = SE2.translation(1, 0.25)
+    point_in_frame_R1 = np.matmul(transform_R1_to_R2, point_in_frame_R2)
+    print(f'1/ Coordinates of point P in reference frame R1 -> [x, y] = {point_in_frame_R1[:2]}\n')
 
     # 2
-    R1_P = np.array([0.5, 0.5, 1]).transpose()
-    R2_T_R1 = np.linalg.inv(R1_T_R2)
-    R2_P = np.matmul(R2_T_R1, R1_P)
-    print(f'2/ Coordinates of point P in reference frame R2 -> [x, y] = {R2_P[:2]}')
+    point_in_frame_R1 = np.array([0.5, 0.5, 1]).transpose()
+    transform_R2_to_R1 = np.linalg.inv(transform_R1_to_R2)
+    point_in_frame_R2 = np.matmul(transform_R2_to_R1, point_in_frame_R1)
+    print(f'2/ Coordinates of point P in reference frame R2 -> [x, y] = {point_in_frame_R2[:2]}\n')
 
     # 3
-    R2_P = np.array([0.5, 0.5, 1]).transpose()
-    R1_T_R2 = np.matmul(SE2.translation(1, 0.25), SE2.rotation(np.pi/4))
-    R1_P = np.matmul(R1_T_R2, R2_P)
-    print(f'3/ Coordinates of point P in reference frame R1 -> [x, y] = {R1_P[:2]}')
+    point_in_frame_R2 = np.array([0.5, 0.5, 1]).transpose()
+    transform_R1_to_R2 = np.matmul(SE2.translation(1, 0.25), SE2.rotation(np.pi / 4))
+    point_in_frame_R1 = np.matmul(transform_R1_to_R2, point_in_frame_R2)
+    print(f'3/ Coordinates of point P in reference frame R1 -> [x, y] = {point_in_frame_R1[:2]}\n')
 
     # 4
-    R1_P = np.array([0.5, 0.5, 1]).transpose()
-    R2_T_R1 = np.linalg.inv(R1_T_R2)
-    R2_P = np.matmul(R2_T_R1, R1_P)
-    print(f'4/ Coordinates of point P in reference frame R2 -> [x, y] = {R2_P[:2]}')
+    point_in_frame_R1 = np.array([0.5, 0.5, 1]).transpose()
+    transform_R2_to_R1 = np.linalg.inv(transform_R1_to_R2)
+    point_in_frame_R2 = np.matmul(transform_R2_to_R1, point_in_frame_R1)
+    print(f'4/ Coordinates of point P in reference frame R2 -> [x, y] = {point_in_frame_R2[:2]}\n')
 
 
 if __name__ == '__main__':
