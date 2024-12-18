@@ -1,13 +1,13 @@
 import numpy as np
 from kinematics import Kinematics2DOF
 
-def s(t, a, v, acceleration_time, endTime):
+def s(t, a, v, acceleration_time, tf):
     if 0 <= t < acceleration_time:
-        return a * t**2 / 2
-    elif acceleration_time <= t < endTime - acceleration_time:
-        return v * t - v**2 / (2 * a)
-    elif endTime - acceleration_time <= t <= endTime:
-        return v * t - a * (t - endTime)**2 / 2
+        return (a * t**2) / 2
+    elif acceleration_time <= t < tf - acceleration_time:
+        return v * t - (v**2) / (2 * a)
+    elif tf - acceleration_time <= t <= tf:
+        return (2 * a * v * tf - 2 * v**2 - (a**2) * (t - tf)**2) / (2 * a)
     else:
         return 0
 
@@ -18,18 +18,18 @@ class TrajectoryPlanning:
 
         acceleration_time = v_max / a_max
 
-        endTime = 2 * acceleration_time + delta_s / v_max
+        tf = 2 * acceleration_time + delta_s / v_max
 
         s_acceleration = a_max * acceleration_time**2 / 2
 
-        if endTime < delta_s / v_max or endTime > 2 * delta_s / v_max or 2 * s_acceleration < delta_s:
+        if tf < delta_s / v_max or tf > 2 * delta_s / v_max or 2 * s_acceleration < delta_s:
             return None
 
-        t = np.arange(0, endTime + ts, ts)
+        t = np.arange(0, tf + ts, ts)
 
         direction = 1 if s_final >= s_init else -1
 
-        trajectory = [s_init + direction * s(t_i, a_max, v_max, acceleration_time, endTime) for t_i in t]
+        trajectory = [s_init + direction * s(t_i, a_max, v_max, acceleration_time, tf) for t_i in t]
 
         return np.array(trajectory)
 
