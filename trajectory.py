@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import roboticstoolbox as rtb
-from kinematics import Kinematics2DOF
+from kinematics import inverse_kinematics
 
 
 def trapezoidal_helper(s0, sf, v, a, tf):
@@ -130,7 +130,7 @@ def joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts):
     Returns a vector of joint coordinates that describe a trajectory from the initial configuration
     to the final configuration at evenly spaced time steps of duration ts.
     """
-    
+
     q1_trap_func = trapezoidal_function(q1i, q1f, v, a)
     q2_trap_func = trapezoidal_function(q2i, q2f, v, a)
 
@@ -212,13 +212,14 @@ def euclidean_trajectory(x0, y0, xf, yf, v, a, ts, a1=1, a2=1):
     q_traj = np.zeros((len(t), 2))
 
     for i in range(len(t)):
-        q_traj[i] = Kinematics2DOF.inverse_kinematics(x_traj[i], y_traj[i], a1, a2)[0]
+        q_traj[i] = inverse_kinematics(x_traj[i], y_traj[i], a1, a2)[0]
 
     return q_traj
 
 
 def main():
     ###################################### Trajectory Planning #####################################
+
     robot = rtb.models.DH.Planar2()
 
     # Joint Trajectory Planning
