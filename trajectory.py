@@ -5,7 +5,8 @@ import roboticstoolbox as rtb
 
 def trapezoidal_helper(s0, sf, v, a, tf):
     """
-    Compute the velocity of the linear segment of a trapezoidal profile for a given end time.
+    Compute the velocity of the linear segment of a trapezoidal profile for a given set of
+    parameters
 
     :param s0: initial value
     :type s0: float
@@ -17,6 +18,8 @@ def trapezoidal_helper(s0, sf, v, a, tf):
     :type a: float
     :return: velocity of the linear segment
     :rtype: float
+
+    This function raises an error if there are no feasible velocities for the given parameters.
     """
 
     v1 = (a * tf + np.sqrt(a**2 * tf**2 - 4 * a * (sf - s0))) / 2
@@ -48,51 +51,58 @@ def trapezoidal_function(s0, sf, v, a):
     Returns a function which computes the specific trapezoidal profile as described by the given
     parameters.
     """
+
     if v <= 0:
         raise ValueError('The absolute value of the velocity of the linear segment must be positive.')
     if a <= 0:
         raise ValueError('The absolute value of the acceleration of the ramp segments must be positive.')
 
-    v = v * np.sign(sf - s0)
-    a = a * np.sign(sf - s0)
-
-    if v == 0 and a == 0:
-        ta = np.inf
-        tf = np.inf
+    # If the initial and final values are the same, the function is a constant function that is
+    # equal to the initial value. Here we consider the acceleration and end time to be zero.
+    if s0 == sf:
+        func = lambda t: s0
+        func.ta = 0
+        func.tf = 0
+        return func
     else:
+        # If the trajectory is ascending, the velocity and acceleration must be positive. If the
+        # trajectory is descending, the velocity and acceleration must be negative.
+        v = v * np.sign(sf - s0)
+        a = a * np.sign(sf - s0)
+
         ta = v / a
         tf = ta + (sf - s0) / v
 
-    # Not every value of v is feasible. The velocity must be greater than the average velocity and
-    # less than twice the average velocity.
-    # Ref: https://www.mathworks.com/help/robotics/ug/design-a-trajectory-with-velocity-limits-using-a-trapezoidal-velocity-profile.html
-    if abs(v) < (abs(sf - s0) / tf):
-        raise ValueError("The value of the maximum velocity v is too small. It's not possible to generate a feasible trajectory.")
-    elif abs(v) > (2 * abs(sf - s0) / tf):
-        raise ValueError("The value of the maximum velocity v is too big. It's not possible to generate a feasible trajectory.")
+        # Not every value of v is feasible. The velocity must be greater than the average velocity and
+        # less than twice the average velocity.
+        # Ref: https://www.mathworks.com/help/robotics/ug/design-a-trajectory-with-velocity-limits-using-a-trapezoidal-velocity-profile.html
+        if abs(v) < (abs(sf - s0) / tf):
+            raise ValueError("The value of the maximum velocity is too small. It's not possible to generate a feasible trajectory.")
+        elif abs(v) > (2 * abs(sf - s0) / tf):
+            raise ValueError("The value of the maximum velocity is too big. It's not possible to generate a feasible trajectory.")
 
-    def trap_func(t):
-        if t < 0:
-            return s0
-        elif t <= ta:
-            # acceleration
-            return s0 + a / 2 * t**2
-        elif t <= (tf - ta):
-            # linear motion
-            return s0 + v * t - v**2 / (2 * a)
-        elif t <= tf:
-            # deceleration
-            return s0 + (2 * a * v * tf - 2 * v**2 - a**2 * (t - tf)**2) / (2 * a)
-        else:
-            return sf
+        def trap_func(t):
+            if t < 0:
+                return s0
+            elif t <= ta:
+                # acceleration
+                return s0 + a / 2 * t**2
+            elif t <= (tf - ta):
+                # linear motion
+                return s0 + v * t - v**2 / (2 * a)
+            elif t <= tf:
+                # deceleration
+                return s0 + (2 * a * v * tf - 2 * v**2 - a**2 * (t - tf)**2) / (2 * a)
+            else:
+                return sf
 
-    # Return the function, but add some computed parameters as attributes as a way of returning
-    # extra values without a tuple return
-    func = trap_func
-    func.ta = ta
-    func.tf = tf
+        # Return the function, but add some computed parameters as attributes as a way of returning
+        # extra values without a tuple return
+        func = trap_func
+        func.ta = ta
+        func.tf = tf
 
-    return func
+        return func
 
 
 def joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts):
@@ -124,20 +134,20 @@ def joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts):
 
     tf1 = q1_trap_func.tf
     tf2 = q2_trap_func.tf
-    tf = max(tf1, tf2) if tf1 != np.inf and tf2 != np.inf else min(tf1, tf2)
+    tf = max(tf1, tf2)
 
-    if tf1 != tf2:
-        if tf2 != np.inf and tf == tf1:
+    if tf1 != 0 and tf2 != 0 and tf1 != tf2:
+        if tf == tf1:
             v2 = trapezoidal_helper(q2i, q2f, v, a, tf)
             q2_trap_func = trapezoidal_function(q2i, q2f, v2, a)
-        elif tf1 != np.inf and tf == tf2:
+        elif tf == tf2:
             v1 = trapezoidal_helper(q1i, q1f, v, a, tf)
             q1_trap_func = trapezoidal_function(q1i, q1f, v1, a)
 
-    if tf != np.inf:
+    if tf != 0:
         t = np.arange(0, tf + ts, ts)
     else:
-        t = np.linspace(0, 1, 100)
+        t = np.arange(0, 1, ts)
 
     q1_traj = np.array([q1_trap_func(ti) for ti in t])
     q2_traj = np.array([q2_trap_func(ti) for ti in t])
@@ -178,8 +188,8 @@ def main():
     robot = rtb.models.DH.Planar2()
 
     # Joint Trajectory Planning
-    q1i, q2i, q1f, q2f = 0, 0, 0, 0
-    v, a, ts = 0.5, 1, 0.01
+    q1i, q2i, q1f, q2f = 0, 0, np.pi/4, np.pi/6
+    v, a, ts = 1, 1, 0.01
 
     trajectory = joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts)
     robot.plot(trajectory, dt=ts, backend='pyplot', movie= 'joint_trajectory_planning.gif')
