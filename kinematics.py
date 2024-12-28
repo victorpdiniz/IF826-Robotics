@@ -1,6 +1,7 @@
 import numpy as np
 from transformations import SE2
 
+
 def forward_kinematics(theta1, theta2, a1, a2):
     """
     Compute the forward kinematics for a 2-DOF planar robotic arm
@@ -26,6 +27,7 @@ def forward_kinematics(theta1, theta2, a1, a2):
     x, y = tAC[:2, 2]
 
     return np.array([x, y])
+
 
 def inverse_kinematics(x, y, a1, a2):
     """
