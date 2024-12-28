@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import roboticstoolbox as rtb
+from kinematics import Kinematics2DOF
 
 
 def trapezoidal_helper(s0, sf, v, a, tf):
@@ -129,6 +130,7 @@ def joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts):
     Returns a vector of joint coordinates that describe a trajectory from the initial configuration
     to the final configuration at evenly spaced time steps of duration ts.
     """
+    
     q1_trap_func = trapezoidal_function(q1i, q1f, v, a)
     q2_trap_func = trapezoidal_function(q2i, q2f, v, a)
 
@@ -156,7 +158,7 @@ def joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts):
     return traj
 
 
-def euclidean_trajectory(x0, y0, xf, yf, v, a, ts):
+def euclidean_trajectory(x0, y0, xf, yf, v, a, ts, a1=1, a2=1):
     """
     Compute a euclidean-space trajectory
 
@@ -174,13 +176,45 @@ def euclidean_trajectory(x0, y0, xf, yf, v, a, ts):
     :type a: float
     :param ts: sample time
     :type ts: float
+    :param a1: length of the first link
+    :type a1: float, optional
+    :param a2: length of the second link
+    :type a2: float, optional
     :return: trajectory
     :rtype: ndarray(n, 2)
 
     Returns a vector of joint configurations that describe a trajectory from the initial
     configuration to the final configuration at evenly spaced time steps of duration ts.
     """
-    pass
+
+    x_trap_func = trapezoidal_function(x0, xf, v, a)
+    y_trap_func = trapezoidal_function(y0, yf, v, a)
+
+    tfx = x_trap_func.tf
+    tfy = y_trap_func.tf
+    tf = max(tfx, tfy)
+
+    if tfx != 0 and tfy != 0 and tfx != tfy:
+        if tf == tfx:
+            vy = trapezoidal_helper(y0, yf, v, a, tf)
+            y_trap_func = trapezoidal_function(y0, yf, vy, a)
+        elif tf == tfy:
+            vx = trapezoidal_helper(x0, xf, v, a, tf)
+            x_trap_func = trapezoidal_function(x0, xf, vx, a)
+
+    if tf != 0:
+        t = np.arange(0, tf + ts, ts)
+    else:
+        t = np.arange(0, 1 + ts, ts)
+
+    x_traj = np.array([x_trap_func(ti) for ti in t])
+    y_traj = np.array([y_trap_func(ti) for ti in t])
+    q_traj = np.zeros((len(t), 2))
+
+    for i in range(len(t)):
+        q_traj[i] = Kinematics2DOF.inverse_kinematics(x_traj[i], y_traj[i], a1, a2)[0]
+
+    return q_traj
 
 
 def main():
@@ -189,10 +223,19 @@ def main():
 
     # Joint Trajectory Planning
     q1i, q2i, q1f, q2f = 0, 0, np.pi/4, np.pi/6
-    v, a, ts = 1, 1, 0.01
+    j_v, j_a, j_ts = 0.5, 1, 0.01
 
-    trajectory = joint_trajectory(q1i, q2i, q1f, q2f, v, a, ts)
-    robot.plot(trajectory, dt=ts, backend='pyplot', movie= 'joint_trajectory_planning.gif')
+    j_trajectory = joint_trajectory(q1i, q2i, q1f, q2f, j_v, j_a, j_ts)
+    robot.plot(j_trajectory, backend='pyplot', dt=j_ts, movie= 'joint_trajectory_planning.gif')
+    plt.close()
+
+    # Euclidean Trajectory Planning
+    x0, y0, xf, yf = 2, 0, 1, 1
+    e_v, e_a, e_ts = 0.5, 1, 0.01
+
+    e_trajectory = euclidean_trajectory(x0, y0, xf, yf, e_v, e_a, e_ts)
+    robot.plot(e_trajectory, backend='pyplot', dt=e_ts, movie= 'euclidean_trajectory_planning.gif')
+    plt.close()
 
 
 if __name__ == '__main__':
