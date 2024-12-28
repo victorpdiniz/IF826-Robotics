@@ -25,7 +25,7 @@ class Kinematics2DOF:
             theta2_2 = -theta2_1
 
             theta3 = np.arctan((link2_length * np.sin(theta2_1))
-                               / link1_length + link2_length * np.cos(theta2_1))
+                               / (link1_length + link2_length * np.cos(theta2_1)))
 
             theta1_1 = np.arctan2(y, x) - theta3
             theta1_2 = np.arctan2(y, x) + theta3
