@@ -3,7 +3,7 @@ from transformations import SE2
 
 def forward_kinematics(theta1, theta2, a1, a2):
     """
-    Compute the forward kinematics for a 2-DOF planar robotic arm.
+    Compute the forward kinematics for a 2-DOF planar robotic arm
 
     Parameters:
     :param theta1: The angle of the first joint
@@ -20,16 +20,16 @@ def forward_kinematics(theta1, theta2, a1, a2):
     This function returns a 2-element array containing the (x, y) coordinates of the end effector.
     """
 
-    t1 = np.matmul(SE2.rotation(theta1), SE2.translation(a1, 0))
-    t2 = np.matmul(SE2.rotation(theta2), SE2.translation(a2, 0))
-    t3 = np.matmul(t1, t2)
-    x, y = t3[:2, 2]
+    tAB = np.matmul(SE2.rotation(theta1), SE2.translation(a1, 0))
+    tBC = np.matmul(SE2.rotation(theta2), SE2.translation(a2, 0))
+    tAC = np.matmul(tAB, tBC)
+    x, y = tAC[:2, 2]
 
     return np.array([x, y])
 
 def inverse_kinematics(x, y, a1, a2):
     """
-    Compute the inverse kinematics for a 2-DOF planar robotic arm.
+    Compute the inverse kinematics for a 2-DOF planar robotic arm
 
     :param x: x coordinate of the end effector
     :type x: float
